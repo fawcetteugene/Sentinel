@@ -1,15 +1,20 @@
 """Authentication tests."""
 
-from fastapi.testclient import TestClient
+from app.api.routes.auth import login
+from app.main import healthz, root
+from app.schemas import LoginRequest
 
-from app.main import app
 
-
-client = TestClient(app)
+def test_root():
+    body = root()
+    assert body["status"] == "ok"
+    assert body["api"] == "/api"
 
 
 def test_healthz():
-    response = client.get("/healthz")
-    assert response.status_code == 200
-    assert response.json()["status"] == "ok"
+    assert healthz()["status"] == "ok"
 
+
+def test_seeded_login(db_session):
+    token = login(LoginRequest(email="admin@sentinel.ai", password="admin123"), db_session)
+    assert token.access_token

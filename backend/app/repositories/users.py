@@ -20,7 +20,16 @@ class UserRepository:
     def list_active_responders(self) -> list[User]:
         return list(
             self.db.scalars(
-                select(User).where(User.is_active.is_(True), User.is_on_duty.is_(True), User.role == Role.FIELD_RESPONDER)
+                select(User).where(
+                    User.is_active.is_(True),
+                    User.is_on_duty.is_(True),
+                    User.role.in_(
+                        [
+                            Role.COMMUNITY_VOLUNTEER,
+                            Role.FIELD_RESPONDER,
+                            Role.DISPATCHER,
+                        ]
+                    ),
+                )
             )
         )
-

@@ -7,6 +7,7 @@ interface AuthState {
   user: User | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
+  updateProfile: (payload: Partial<User>) => Promise<User>
   logout: () => void
   refresh: () => Promise<void>
 }
@@ -21,20 +22,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refresh().finally(() => setLoading(false))
   }, [])
 
-  async function refresh() {
+  async function refresh(options: { preserveOnFailure?: boolean } = {}) {
     try {
       const me = await api.me()
       setUser(me)
       setStoredUser(me)
     } catch {
-      setUser(null)
+      if (!options.preserveOnFailure) {
+        setUser(null)
+      }
     }
   }
 
   async function login(email: string, password: string) {
     const { access_token } = await api.login(email, password)
     setToken(access_token)
-    await refresh()
+    const provisionalUser = decodeToken(access_token, email)
+    setUser(provisionalUser)
+    setStoredUser(provisionalUser)
+    await refresh({ preserveOnFailure: true })
+  }
+
+  async function updateProfile(payload: Partial<User>) {
+    const updated = await api.updateMe(payload)
+    setUser(updated)
+    setStoredUser(updated)
+    return updated
   }
 
   function logout() {
@@ -43,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const value = useMemo<AuthState>(
-    () => ({ user, loading, login, logout, refresh }),
+    () => ({ user, loading, login, updateProfile, logout, refresh }),
     [user, loading],
   )
 
@@ -54,4 +67,34 @@ export function useAuth() {
   const value = useContext(AuthContext)
   if (!value) throw new Error('useAuth must be used within AuthProvider')
   return value
+}
+
+function decodeToken(token: string, fallbackIdentifier: string): User {
+  const payload = token.split('.')[1]
+  let parsed: { sub?: string; role?: User['role'] } = {}
+  try {
+    parsed = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as { sub?: string; role?: User['role'] }
+  } catch {
+    parsed = {}
+  }
+
+  const identifier = parsed.sub || fallbackIdentifier
+  const role = parsed.role || 'public_user'
+  const now = new Date().toISOString()
+  return {
+    id: 0,
+    email: identifier.includes('@') ? identifier : `${identifier}@local`,
+    full_name: identifier,
+    role,
+    phone_number: identifier.startsWith('+') ? identifier : null,
+    username: identifier.includes('@') ? identifier.split('@')[0] : identifier,
+    village: null,
+    skills: [],
+    badge_id: null,
+    avatar_url: null,
+    is_active: true,
+    is_on_duty: true,
+    created_at: now,
+    updated_at: now,
+  }
 }

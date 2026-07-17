@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -22,7 +22,10 @@ body {
     BlinkMacSystemFont,
     'Segoe UI',
     sans-serif;
-  background: #020617;
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 34%),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 28%),
+    linear-gradient(180deg, #f8fafc, #edf7f1 56%, #f8fafc);
 }
 
 * {
@@ -30,6 +33,49 @@ body {
 }
 
 .leaflet-container {
-  background: #0f172a;
+  background: linear-gradient(180deg, #e6f4ec, #d8efe3);
 }
 
+.sentinel-map-icon {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.sentinel-map-dot {
+  position: relative;
+  border-radius: 999px;
+  background: var(--marker-color, #38bdf8);
+  box-shadow:
+    0 0 0 0 color-mix(in srgb, var(--marker-color, #38bdf8) 35%, transparent),
+    0 0 0 8px color-mix(in srgb, var(--marker-color, #38bdf8) 20%, transparent);
+  animation: sentinel-pulse 1.8s ease-out infinite;
+}
+
+.sentinel-map-dot::after {
+  content: '';
+  position: absolute;
+  inset: 20%;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+@keyframes sentinel-pulse {
+  0% {
+    transform: scale(0.9);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--marker-color, #38bdf8) 35%, transparent),
+      0 0 0 8px color-mix(in srgb, var(--marker-color, #38bdf8) 18%, transparent);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow:
+      0 0 0 18px color-mix(in srgb, var(--marker-color, #38bdf8) 0%, transparent),
+      0 0 0 14px color-mix(in srgb, var(--marker-color, #38bdf8) 6%, transparent);
+  }
+  100% {
+    transform: scale(0.9);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--marker-color, #38bdf8) 0%, transparent),
+      0 0 0 8px color-mix(in srgb, var(--marker-color, #38bdf8) 0%, transparent);
+  }
+}

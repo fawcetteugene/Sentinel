@@ -13,7 +13,7 @@ export function ResourcesPage() {
 
   return (
     <div className="space-y-6 p-4 lg:p-6">
-      <SectionHeader eyebrow="Resource Management" title="Fleet, logistics, and support units" />
+      <SectionHeader eyebrow="Community resources" title="People, places, transport, and supplies" description="Track the local support network that helps communities respond before outside rescue arrives." />
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {resources.map((resource) => (
@@ -21,7 +21,7 @@ export function ResourcesPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-lg font-semibold">{resource.name}</div>
-                  <div className="text-sm text-slate-400">{resource.kind}</div>
+                  <div className="text-sm text-slate-400">{resource.kind.replace('_', ' ')}</div>
                 </div>
                 <ResourceBadge status={resource.status} />
               </div>
@@ -35,8 +35,8 @@ export function ResourcesPage() {
           ))}
         </div>
         <Composer
-          title="Register resource"
-          submitLabel="Add resource"
+          title="Add community resource"
+          submitLabel="Save resource"
           fields={[
             { name: 'name', label: 'Name' },
             { name: 'kind', label: 'Kind', placeholder: 'ambulance' },
