@@ -1,14 +1,35 @@
-import type { Assignment } from '@/types'
+import { useQueryClient } from '@tanstack/react-query'
+import { api } from '@/lib/api'
+import { queryKeys, useAssignmentsQuery } from '@/lib/queries'
 import { SectionHeader } from '@/components/SectionHeader'
-import { useAssignmentsQuery } from '@/lib/queries'
+import { Badge } from '@/components/Badge'
 
 export function AssignmentsPage() {
+  const queryClient = useQueryClient()
   const assignmentsQuery = useAssignmentsQuery()
   const assignments = assignmentsQuery.data ?? []
 
+  async function autoDispatch() {
+    await api.autoDispatch(5)
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.assignments }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.missionControl }),
+    ])
+  }
+
   return (
     <div className="space-y-6 p-4 lg:p-6">
-      <SectionHeader eyebrow="Task Assignment" title="Dispatcher missions and responder instructions" />
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <SectionHeader
+          eyebrow="Task Assignment"
+          title="Dispatcher missions and responder instructions"
+          description="Assignments are generated manually or through mission automation for the most urgent incidents."
+        />
+        <button onClick={autoDispatch} className="rounded-2xl bg-calm px-4 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110">
+          Auto-dispatch missions
+        </button>
+      </div>
       <div className="grid gap-4 xl:grid-cols-2">
         {assignments.map((assignment) => (
           <div key={assignment.id} className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-glow">
@@ -17,7 +38,7 @@ export function AssignmentsPage() {
                 <div className="text-lg font-semibold">{assignment.mission}</div>
                 <div className="text-sm text-slate-400">{assignment.location}</div>
               </div>
-              <div className="rounded-full bg-calm/15 px-3 py-1 text-xs font-semibold text-calm">{assignment.priority}</div>
+              <Badge label={assignment.priority} tone="bg-calm/15 text-calm ring-calm/30" />
             </div>
             <div className="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
               <div className="rounded-2xl bg-slate-950/70 p-3">ETA {assignment.eta_minutes} min</div>

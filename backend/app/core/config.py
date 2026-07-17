@@ -14,8 +14,6 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 12
     database_url: str = "sqlite:///./sentinel.db"
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
-    openai_api_key: str | None = None
-    openai_model: str = "gpt-5.6-sol"
     backend_url: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:5173"
 
@@ -23,4 +21,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

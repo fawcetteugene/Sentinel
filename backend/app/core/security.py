@@ -8,10 +8,14 @@ from passlib.context import CryptContext
 
 from app.core.config import get_settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 class Role(StrEnum):
+    PUBLIC_USER = "public_user"
+    COMMUNITY_VOLUNTEER = "community_volunteer"
+    COMMUNITY_LEADER = "community_leader"
+    COUNTY_ADMIN = "county_admin"
     INCIDENT_COMMANDER = "incident_commander"
     DISPATCHER = "dispatcher"
     FIELD_RESPONDER = "field_responder"
@@ -31,4 +35,3 @@ def create_access_token(subject: str, role: str, expires_delta: timedelta | None
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
     payload = {"sub": subject, "role": role, "exp": expire}
     return jwt.encode(payload, settings.secret_key, algorithm="HS256")
-

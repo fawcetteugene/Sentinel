@@ -32,12 +32,16 @@ def get_current_user(
     )
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
-        email = payload.get("sub")
-        if email is None:
+        subject = payload.get("sub")
+        if subject is None:
             raise credentials_error
     except JWTError as exc:
         raise credentials_error from exc
-    user = db.query(User).filter(User.email == email).first()
+    user = (
+        db.query(User)
+        .filter((User.email == subject) | (User.username == subject) | (User.phone_number == subject))
+        .first()
+    )
     if user is None:
         raise credentials_error
     if not user.is_active:

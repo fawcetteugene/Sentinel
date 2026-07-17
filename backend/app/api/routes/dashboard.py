@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import db_session, get_current_user
 from app.models import User
-from app.schemas import AnalyticsSummary, DashboardSummary, AICommanderResponse
+from app.schemas import AICommanderResponse, AnalyticsSummary, DashboardSummary, MissionControlSummary
 from app.services.operations import OperationsService
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -25,3 +25,7 @@ def analytics(_: User = Depends(get_current_user), db: Session = Depends(db_sess
 def commander(_: User = Depends(get_current_user), db: Session = Depends(db_session)) -> AICommanderResponse:
     return OperationsService(db).commander_briefing()
 
+
+@router.get("/mission-control", response_model=MissionControlSummary)
+def mission_control(_: User = Depends(get_current_user), db: Session = Depends(db_session)) -> MissionControlSummary:
+    return OperationsService(db).mission_control()

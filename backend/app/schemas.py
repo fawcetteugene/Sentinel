@@ -7,7 +7,16 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.core.enums import HazardType, IncidentSeverity, IncidentStatus, MessageKind, ReportKind, ResourceKind, ResourceStatus
+from app.core.enums import (
+    HazardType,
+    IncidentSeverity,
+    IncidentStatus,
+    MessageKind,
+    ReportKind,
+    ResourceKind,
+    ResourceStatus,
+    WeatherCondition,
+)
 from app.core.security import Role
 
 
@@ -20,7 +29,10 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: str
     role: Role
+    username: str | None = None
     phone_number: str | None = None
+    village: str | None = None
+    skills: list[str] | None = None
     badge_id: str | None = None
     avatar_url: str | None = None
     is_active: bool = True
@@ -29,6 +41,18 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(min_length=8)
+
+
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+    username: str | None = None
+    phone_number: str | None = None
+    village: str | None = None
+    skills: list[str] | None = None
+    badge_id: str | None = None
+    avatar_url: str | None = None
+    is_active: bool | None = None
+    is_on_duty: bool | None = None
 
 
 class UserRead(UserBase):
@@ -40,8 +64,27 @@ class UserRead(UserBase):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
+    identifier: str | None = None
+    secret: str | None = None
+    email: EmailStr | None = None
+    password: str | None = None
+    phone_number: str | None = None
+    pin: str | None = None
+    username: str | None = None
+
+
+class PublicIncidentReportCreate(BaseModel):
+    what_happened: str
+    where: str
+    need_help_immediately: bool = False
+    share_gps: bool = False
+    latitude: float | None = None
+    longitude: float | None = None
+    incident_type: HazardType = HazardType.OTHER
+    photo_urls: list[str] = Field(default_factory=list)
+    voice_note_urls: list[str] = Field(default_factory=list)
+    reporter_name: str | None = None
+    reporter_phone: str | None = None
 
 
 class LocationRead(BaseModel):
@@ -222,18 +265,57 @@ class NotificationRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class DashboardSummary(BaseModel):
-    total_active_incidents: int
+class AuditLogRead(BaseModel):
+    id: int
+    actor_id: int | None = None
+    action: str
+    entity_type: str
+    entity_id: int | None = None
+    severity: str
+    details: dict[str, Any] | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AdminOverview(BaseModel):
+    total_users: int
+    active_users: int
+    inactive_users: int
+    administrators: int
+    commanders: int
+    dispatchers: int
+    responders: int
+    open_incidents: int
     critical_incidents: int
-    available_responders: int
-    hospitals: int
-    shelters: int
-    fire_stations: int
-    police_units: int
-    ambulances: int
-    recent_alerts: list[NotificationRead]
-    live_incidents: list[IncidentRead]
-    ai_recommendations: list[str]
+    available_resources: int
+    audit_events_24h: int
+
+
+class DashboardSummary(BaseModel):
+    people_safe: int = 0
+    people_missing: int = 0
+    families_displaced: int = 0
+    shelters_open: int = 0
+    roads_closed: int = 0
+    volunteers_active: int = 0
+    community_resources_available: int = 0
+    medical_supplies: int = 0
+    clean_water: int = 0
+    food_stocks: int = 0
+    weather_alerts: int = 0
+    high_risk_villages: int = 0
+    total_active_incidents: int = 0
+    critical_incidents: int = 0
+    available_responders: int = 0
+    hospitals: int = 0
+    shelters: int = 0
+    fire_stations: int = 0
+    police_units: int = 0
+    ambulances: int = 0
+    recent_alerts: list[NotificationRead] = Field(default_factory=list)
+    live_incidents: list[IncidentRead] = Field(default_factory=list)
+    ai_recommendations: list[str] = Field(default_factory=list)
 
 
 class AnalyticsPoint(BaseModel):
@@ -249,8 +331,48 @@ class AnalyticsSummary(BaseModel):
     mission_completion_rate: list[AnalyticsPoint]
 
 
+class MissionAction(BaseModel):
+    incident_id: int
+    incident_title: str
+    responder_id: int | None = None
+    responder_name: str | None = None
+    resource_name: str | None = None
+    priority: str
+    eta_minutes: int
+    instructions: str
+    explanation: str
+
+
+class MissionControlSummary(BaseModel):
+    summary: str
+    priorities: list[str]
+    available_responders: int
+    available_vehicles: int
+    critical_incidents: int
+    weather_summary: str | None = None
+    recommended_actions: list[MissionAction] = Field(default_factory=list)
+    operational_notes: list[str] = Field(default_factory=list)
+
+
+class SearchResult(BaseModel):
+    entity_type: str
+    entity_id: int
+    title: str
+    subtitle: str
+    severity: str | None = None
+    status: str | None = None
+    url: str | None = None
+    created_at: datetime | None = None
+
+
+class SearchResponse(BaseModel):
+    query: str
+    total: int
+    results: list[SearchResult]
+
+
 class OperationalEvent(BaseModel):
-    type: Literal["incident", "resource", "assignment", "message", "notification"]
+    type: Literal["incident", "resource", "assignment", "message", "notification", "weather", "system", "timeline", "world"]
     message: str
     payload: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
@@ -273,3 +395,178 @@ class IncidentReplayPoint(BaseModel):
     label: str
     narrative: str
     severity: IncidentSeverity
+
+
+class SimulationStateRead(BaseModel):
+    id: int
+    scenario_name: str
+    seed: int
+    tick: int
+    is_running: bool
+    tick_interval_seconds: int
+    last_tick_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class WeatherSnapshotRead(BaseModel):
+    id: int
+    condition: WeatherCondition
+    temperature_c: float
+    humidity_percent: int
+    wind_kph: int
+    rain_mm: float
+    lightning_risk: int
+    flood_warning: bool
+    heatwave_warning: bool
+    visibility_km: float
+    summary: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class RoadClosureRead(BaseModel):
+    id: int
+    title: str
+    latitude: float
+    longitude: float
+    reason: str
+    severity: str
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SystemHealthRead(BaseModel):
+    id: int
+    server_status: str
+    database_status: str
+    websocket_status: str
+    simulation_status: str
+    memory_usage_mb: int
+    cpu_usage_percent: int
+    open_connections: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class WorldPoint(BaseModel):
+    latitude: float
+    longitude: float
+
+
+class WorldLocationRead(BaseModel):
+    id: str
+    name: str
+    kind: str
+    category: str
+    latitude: float
+    longitude: float
+    severity: str | None = None
+    status: str | None = None
+    note: str | None = None
+    path: list[WorldPoint] = Field(default_factory=list)
+
+
+class WorldActorRead(BaseModel):
+    id: str
+    name: str
+    kind: str
+    status: str
+    latitude: float
+    longitude: float
+    destination: WorldPoint | None = None
+    destination_name: str | None = None
+    speed_kph: float
+    eta_minutes: int | None = None
+    fuel_level: int | None = None
+    health: int | None = None
+    crew: int | None = None
+    mission: str | None = None
+    vehicle: str | None = None
+    equipment: list[str] = Field(default_factory=list)
+
+
+class WorldFacilityRead(BaseModel):
+    id: str
+    name: str
+    kind: str
+    latitude: float
+    longitude: float
+    capacity: int | None = None
+    occupancy: int | None = None
+    available_beds: int | None = None
+    doctors_available: int | None = None
+    incoming_patients: int | None = None
+    food: int | None = None
+    water: int | None = None
+    medicine: int | None = None
+    power: int | None = None
+    security: str | None = None
+    alert_level: str | None = None
+
+
+class WorldZoneRead(BaseModel):
+    id: str
+    name: str
+    kind: str
+    severity: str
+    status: str
+    latitude: float
+    longitude: float
+    radius_m: int
+    growth_rate: float
+    opacity: float
+    points: list[WorldPoint] = Field(default_factory=list)
+
+
+class WorldMissionRead(BaseModel):
+    id: str
+    incident_id: int | None = None
+    incident_title: str
+    title: str
+    priority: str
+    assigned_team: str
+    vehicle: str | None = None
+    status: str
+    progress_percent: int
+    eta_minutes: int | None = None
+    activity: str
+    completion_time: str | None = None
+    explanation: str
+
+
+class SimulationWorldRead(BaseModel):
+    scenario_name: str
+    tick: int
+    is_running: bool
+    briefing: str
+    commands: list[str] = Field(default_factory=list)
+    metrics: dict[str, Any] = Field(default_factory=dict)
+    world_locations: list[WorldLocationRead] = Field(default_factory=list)
+    responders: list[WorldActorRead] = Field(default_factory=list)
+    vehicles: list[WorldActorRead] = Field(default_factory=list)
+    facilities: list[WorldFacilityRead] = Field(default_factory=list)
+    zones: list[WorldZoneRead] = Field(default_factory=list)
+    missions: list[WorldMissionRead] = Field(default_factory=list)
+    timeline: list[TimelineEventRead] = Field(default_factory=list)
+    weather: WeatherSnapshotRead | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class TimelineEventRead(BaseModel):
+    id: int
+    category: str
+    title: str
+    narrative: str
+    severity: str
+    payload: dict[str, Any] | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

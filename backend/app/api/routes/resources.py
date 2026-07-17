@@ -20,8 +20,7 @@ def list_resources(_: User = Depends(get_current_user), db: Session = Depends(db
 @router.post("", response_model=ResourceRead)
 def create_resource(
     payload: ResourceCreate,
-    _: User = Depends(require_role(Role.DISPATCHER, Role.INCIDENT_COMMANDER, Role.ADMINISTRATOR)),
+    _: User = Depends(require_role(Role.COMMUNITY_LEADER, Role.COUNTY_ADMIN, Role.INCIDENT_COMMANDER, Role.ADMINISTRATOR)),
     db: Session = Depends(db_session),
 ) -> ResourceRead:
     return ResourceRead.model_validate(OperationsService(db).create_resource(payload))
-

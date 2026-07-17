@@ -17,6 +17,7 @@ from app.core.enums import (
     ReportKind,
     ResourceKind,
     ResourceStatus,
+    WeatherCondition,
 )
 from app.core.security import Role
 
@@ -33,12 +34,15 @@ class User(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    username: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[Role] = mapped_column(Enum(Role), nullable=False, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_on_duty: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     phone_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    village: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    skills: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     badge_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     last_location_id: Mapped[int | None] = mapped_column(ForeignKey("locations.id"), nullable=True)
@@ -195,3 +199,92 @@ class Notification(Base, TimestampMixin):
     action_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
     user: Mapped[User] = relationship(back_populates="notifications")
+
+
+class AuditLog(Base, TimestampMixin):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    action: Mapped[str] = mapped_column(String(120), nullable=False)
+    entity_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    entity_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    severity: Mapped[str] = mapped_column(String(50), default="info", nullable=False)
+    details: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+    actor: Mapped["User | None"] = relationship(foreign_keys=[actor_id])
+
+
+class SimulationState(Base, TimestampMixin):
+    __tablename__ = "simulation_state"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    scenario_name: Mapped[str] = mapped_column(String(255), default="baseline", nullable=False)
+    seed: Mapped[int] = mapped_column(Integer, default=20260716, nullable=False)
+    tick: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    is_running: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    tick_interval_seconds: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
+    last_tick_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class SimulationWorldSnapshot(Base, TimestampMixin):
+    __tablename__ = "simulation_world_snapshots"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    scenario_name: Mapped[str] = mapped_column(String(255), default="baseline", nullable=False)
+    tick: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    is_running: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    briefing: Mapped[str] = mapped_column(Text, nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+
+class WeatherSnapshot(Base, TimestampMixin):
+    __tablename__ = "weather_snapshots"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    condition: Mapped[WeatherCondition] = mapped_column(Enum(WeatherCondition), nullable=False, index=True)
+    temperature_c: Mapped[float] = mapped_column(Float, nullable=False)
+    humidity_percent: Mapped[int] = mapped_column(Integer, nullable=False)
+    wind_kph: Mapped[int] = mapped_column(Integer, nullable=False)
+    rain_mm: Mapped[float] = mapped_column(Float, nullable=False)
+    lightning_risk: Mapped[int] = mapped_column(Integer, nullable=False)
+    flood_warning: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    heatwave_warning: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    visibility_km: Mapped[float] = mapped_column(Float, nullable=False)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RoadClosure(Base, TimestampMixin):
+    __tablename__ = "road_closures"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    severity: Mapped[str] = mapped_column(String(50), nullable=False, default="warning")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class SystemHealthSnapshot(Base, TimestampMixin):
+    __tablename__ = "system_health_snapshots"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    server_status: Mapped[str] = mapped_column(String(50), nullable=False)
+    database_status: Mapped[str] = mapped_column(String(50), nullable=False)
+    websocket_status: Mapped[str] = mapped_column(String(50), nullable=False)
+    simulation_status: Mapped[str] = mapped_column(String(50), nullable=False)
+    memory_usage_mb: Mapped[int] = mapped_column(Integer, nullable=False)
+    cpu_usage_percent: Mapped[int] = mapped_column(Integer, nullable=False)
+    open_connections: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
+class TimelineEvent(Base, TimestampMixin):
+    __tablename__ = "timeline_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    narrative: Mapped[str] = mapped_column(Text, nullable=False)
+    severity: Mapped[str] = mapped_column(String(50), default="info", nullable=False)
+    payload: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
