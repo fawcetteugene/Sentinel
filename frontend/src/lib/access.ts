@@ -58,8 +58,8 @@ export const routeAccess: Record<AppPath, Role[]> = {
   '/assignments': responderRoles,
   '/commander': leaderRoles,
   '/reports': leaderRoles,
-  '/analytics': leaderRoles,
-  '/search': leaderRoles,
+  '/analytics': adminRoles,
+  '/search': adminRoles,
   '/admin': adminRoles,
   '/demo': adminRoles,
 }
@@ -102,4 +102,3 @@ export function defaultPathForRole(role: Role | null | undefined): AppPath {
   if (responderRoles.includes(role)) return '/'
   return '/'
 }
-

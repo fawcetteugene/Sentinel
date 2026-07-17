@@ -3,7 +3,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.deps import db_session, get_current_user
+from app.api.deps import db_session, get_current_user, require_role
+from app.core.security import Role
 from app.models import User
 from app.schemas import AICommanderResponse, AnalyticsSummary, DashboardSummary, MissionControlSummary
 from app.services.operations import OperationsService
@@ -17,15 +18,28 @@ def summary(_: User = Depends(get_current_user), db: Session = Depends(db_sessio
 
 
 @router.get("/analytics", response_model=AnalyticsSummary)
-def analytics(_: User = Depends(get_current_user), db: Session = Depends(db_session)) -> AnalyticsSummary:
+def analytics(
+    _: User = Depends(require_role(Role.COUNTY_ADMIN, Role.ADMINISTRATOR)),
+    db: Session = Depends(db_session),
+) -> AnalyticsSummary:
     return OperationsService(db).analytics()
 
 
 @router.get("/commander", response_model=AICommanderResponse)
-def commander(_: User = Depends(get_current_user), db: Session = Depends(db_session)) -> AICommanderResponse:
+def commander(
+    _: User = Depends(
+        require_role(Role.COMMUNITY_LEADER, Role.COUNTY_ADMIN, Role.INCIDENT_COMMANDER, Role.DISPATCHER, Role.ADMINISTRATOR)
+    ),
+    db: Session = Depends(db_session),
+) -> AICommanderResponse:
     return OperationsService(db).commander_briefing()
 
 
 @router.get("/mission-control", response_model=MissionControlSummary)
-def mission_control(_: User = Depends(get_current_user), db: Session = Depends(db_session)) -> MissionControlSummary:
+def mission_control(
+    _: User = Depends(
+        require_role(Role.COMMUNITY_LEADER, Role.COUNTY_ADMIN, Role.INCIDENT_COMMANDER, Role.DISPATCHER, Role.ADMINISTRATOR)
+    ),
+    db: Session = Depends(db_session),
+) -> MissionControlSummary:
     return OperationsService(db).mission_control()

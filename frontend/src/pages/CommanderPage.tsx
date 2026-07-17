@@ -23,121 +23,102 @@ export function CommanderPage() {
     ])
   }
 
-  if (!mission || !briefing) {
-    return <div className="p-6 text-slate-600">Loading community missions…</div>
-  }
+  if (!mission || !briefing) return <div className="p-6 text-slate-500">Loading missions…</div>
 
   return (
     <div className="space-y-6 p-4 lg:p-6">
-      <SectionHeader
-        eyebrow="Community missions"
-        title="Simple mission planning and volunteer coordination"
-        description="The screen prioritizes urgent reports, proposes nearby helpers, and explains every recommendation in plain language."
-      />
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Active Priorities" value={mission.priorities.length} detail={mission.summary} />
-        <StatCard title="Responders" value={mission.available_responders} accent="bg-emerald-500/15 text-emerald-300" />
-        <StatCard title="Vehicles" value={mission.available_vehicles} accent="bg-amber-500/15 text-amber-300" />
-        <StatCard title="Critical Incidents" value={mission.critical_incidents} accent="bg-red-500/15 text-red-300" />
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-        <div>
-          <div className="text-xs uppercase tracking-[0.35em] text-calm/80">Operational Summary</div>
-          <div className="mt-2 text-lg text-slate-100">{mission.summary}</div>
-          <div className="mt-2 text-sm text-slate-400">{mission.weather_summary ?? 'Weather conditions are not available.'}</div>
-        </div>
-        <button onClick={autoDispatch} className="rounded-2xl bg-calm px-4 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110">
-          Auto-create community missions
+      <div className="flex flex-wrap items-start justify-between gap-4 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+        <SectionHeader eyebrow="Commander" title="Missions" description="Priorities, nearby help, and short explanations." />
+        <button onClick={autoDispatch} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700">
+          Auto-dispatch
         </button>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="space-y-6">
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-            <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.35em] text-calm/80">Recommended Actions</div>
-                  <h2 className="mt-2 text-2xl font-semibold">Mission Plan</h2>
-                </div>
-              <Badge label={`Active ${mission.recommended_actions.length}`} tone="bg-calm/15 text-calm ring-calm/30" />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard title="Priorities" value={mission.priorities.length} accent="bg-emerald-50 text-emerald-700" />
+        <StatCard title="Responders" value={mission.available_responders} accent="bg-sky-50 text-sky-700" />
+        <StatCard title="Vehicles" value={mission.available_vehicles} accent="bg-amber-50 text-amber-700" />
+        <StatCard title="Critical" value={mission.critical_incidents} accent="bg-rose-50 text-rose-700" />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+        <div className="space-y-4">
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs uppercase tracking-[0.35em] text-slate-500">Plan</div>
+                <div className="mt-1 text-xl font-semibold text-slate-950">Mission list</div>
+              </div>
+              <Badge label={`ACTIVE ${mission.recommended_actions.length}`} tone="bg-emerald-50 text-emerald-700 ring-emerald-200" />
             </div>
             <div className="mt-4 space-y-3">
               {mission.recommended_actions.map((action) => (
-                <motion.div key={action.incident_id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                <motion.div key={action.incident_id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <div className="font-semibold">{action.incident_title}</div>
-                      <div className="text-sm text-slate-400">
-                        {action.responder_name ?? 'Unassigned responder'} {action.resource_name ? `· ${action.resource_name}` : ''}
-                      </div>
+                      <div className="font-semibold text-slate-950">{action.incident_title}</div>
+                      <div className="text-sm text-slate-500">{action.responder_name ?? 'Unassigned'}{action.resource_name ? ` · ${action.resource_name}` : ''}</div>
                     </div>
-                    <Badge label={action.priority} tone="bg-white/10 text-slate-200 ring-white/10" />
+                    <Badge label={action.priority.toUpperCase()} tone="bg-sky-50 text-sky-700 ring-sky-200" />
                   </div>
-                  <div className="mt-3 text-sm leading-6 text-slate-300">{action.instructions}</div>
-                  <div className="mt-3 text-xs text-slate-500">{action.explanation}</div>
+                  <div className="mt-2 text-sm text-slate-700">{action.instructions}</div>
                 </motion.div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-            <div className="text-xs uppercase tracking-[0.35em] text-calm/80">Commander Briefing</div>
-            <h2 className="mt-2 text-2xl font-semibold">AI Explanation Layer</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-300">{briefing.summary}</p>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <BriefingList title="Priorities" items={briefing.priorities} />
-              <BriefingList title="Responder Allocation" items={briefing.responder_allocation} />
-              <BriefingList title="Action Plan" items={briefing.action_plan} />
-              <BriefingList title="Resource Shortages" items={briefing.resource_shortages} />
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <SectionHeader eyebrow="Briefing" title="Why this plan" />
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <MiniList title="Priorities" items={briefing.priorities} />
+              <MiniList title="Allocations" items={briefing.responder_allocation} />
+              <MiniList title="Actions" items={briefing.action_plan} />
+              <MiniList title="Gaps" items={briefing.resource_shortages} />
             </div>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <Panel title="Operational Notes" items={mission.operational_notes} />
-          <Panel title="Escalation Forecast" text={briefing.escalation_forecast} />
-          <Panel title="Evacuation Advice" text={briefing.evacuation_advice} />
-          <Panel title="Situation Report" text={briefing.situation_report} />
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-glow">
-            <div className="text-sm font-semibold">Why the plan looks this way</div>
-            <div className="mt-3 space-y-2 text-sm text-slate-300">
-              {briefing.explanation.map((line) => (
-                <div key={line} className="rounded-2xl bg-slate-950/70 p-3">{line}</div>
-              ))}
-            </div>
-          </div>
+        <div className="space-y-4">
+          <Panel title="Summary" text={mission.summary} />
+          <Panel title="Weather" text={mission.weather_summary ?? 'No weather summary'} />
+          <Panel title="Notes" items={mission.operational_notes} />
+          <Panel title="Forecast" text={briefing.escalation_forecast} />
+          <Panel title="Advice" text={briefing.evacuation_advice} />
+          <Panel title="Report" text={briefing.situation_report} />
         </div>
       </div>
     </div>
   )
 }
 
-function BriefingList({ title, items }: { title: string; items: string[] }) {
+function MiniList({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="rounded-2xl bg-slate-950/70 p-4">
-      <div className="text-sm font-semibold">{title}</div>
-      <ul className="mt-2 space-y-2 text-sm text-slate-300">
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="text-sm font-semibold text-slate-950">{title}</div>
+      <div className="mt-2 space-y-2 text-sm text-slate-700">
         {items.map((item) => (
-          <li key={item}>{item}</li>
+          <div key={item} className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+            {item}
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   )
 }
 
 function Panel({ title, text, items }: { title: string; text?: string; items?: string[] }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-glow">
-      <div className="text-sm font-semibold">{title}</div>
-      {text ? <div className="mt-3 text-sm leading-7 text-slate-300">{text}</div> : null}
+    <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+      <div className="text-xs uppercase tracking-[0.35em] text-slate-500">{title}</div>
+      {text ? <div className="mt-3 text-sm leading-6 text-slate-700">{text}</div> : null}
       {items ? (
-        <ul className="mt-3 space-y-2 text-sm text-slate-300">
+        <div className="mt-3 space-y-2">
           {items.map((item) => (
-            <li key={item}>{item}</li>
+            <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+              {item}
+            </div>
           ))}
-        </ul>
+        </div>
       ) : null}
     </div>
   )

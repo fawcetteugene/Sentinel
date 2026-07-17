@@ -3,6 +3,7 @@ import { api } from '@/lib/api'
 import { queryKeys, useReportsQuery } from '@/lib/queries'
 import { SectionHeader } from '@/components/SectionHeader'
 import { Badge } from '@/components/Badge'
+import { StatCard } from '@/components/StatCard'
 
 export function ReportsPage() {
   const queryClient = useQueryClient()
@@ -21,40 +22,39 @@ export function ReportsPage() {
     URL.revokeObjectURL(url)
   }
 
-  async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.reports })
-  }
-
   return (
     <div className="space-y-6 p-4 lg:p-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <SectionHeader
-          eyebrow="Reports"
-          title="Situation reports and operational exports"
-          description="Generate, review, and export incident and operational reports in CSV or PDF format."
-        />
+      <div className="flex flex-wrap items-start justify-between gap-4 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+        <SectionHeader eyebrow="Reports" title="Briefs" description="Operational notes and exports." />
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => void download('csv')} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10">
-            Export CSV
+          <button onClick={() => void download('csv')} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+            CSV
           </button>
-          <button onClick={() => void download('pdf')} className="rounded-2xl bg-calm px-4 py-3 text-sm font-semibold text-slate-950 hover:brightness-110">
-            Export PDF
+          <button onClick={() => void download('pdf')} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700">
+            PDF
           </button>
-          <button onClick={() => void refresh()} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10">
+          <button onClick={() => void queryClient.invalidateQueries({ queryKey: queryKeys.reports })} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
             Refresh
           </button>
         </div>
       </div>
 
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard title="Reports" value={reports.length} accent="bg-emerald-50 text-emerald-700" />
+        <StatCard title="Incidents" value={reports.filter((item) => item.kind === 'incident').length} accent="bg-rose-50 text-rose-700" />
+        <StatCard title="Operations" value={reports.filter((item) => item.kind !== 'incident').length} accent="bg-sky-50 text-sky-700" />
+        <StatCard title="Exports" value="2" accent="bg-amber-50 text-amber-700" />
+      </div>
+
       <div className="grid gap-4 xl:grid-cols-2">
         {reports.map((report) => (
-          <div key={report.id} className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-glow">
+          <div key={report.id} className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-xs uppercase tracking-[0.35em] text-calm/80">{report.kind}</div>
-              <Badge label={report.kind.toUpperCase()} tone="bg-white/10 text-slate-200 ring-white/10" />
+              <div className="text-xs uppercase tracking-[0.35em] text-slate-500">{report.kind}</div>
+              <Badge label={report.kind.toUpperCase()} tone="bg-emerald-50 text-emerald-700 ring-emerald-200" />
             </div>
-            <div className="mt-2 text-xl font-semibold">{report.title}</div>
-            <p className="mt-3 text-sm text-slate-300">{report.summary}</p>
+            <div className="mt-2 text-lg font-semibold text-slate-950">{report.title}</div>
+            <div className="mt-2 text-sm text-slate-600">{report.summary}</div>
             <div className="mt-4 text-xs text-slate-500">{new Date(report.created_at).toLocaleString()}</div>
           </div>
         ))}

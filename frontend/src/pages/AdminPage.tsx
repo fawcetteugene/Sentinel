@@ -75,90 +75,89 @@ export function AdminPage() {
 
   return (
     <div className="space-y-6 p-4 lg:p-6">
-      <SectionHeader
-        eyebrow="County admin"
-        title="System control and oversight"
-        description="Manage accounts, monitor live operational health, and review audit and simulation events."
-      />
+      <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+        <SectionHeader eyebrow="County admin" title="Oversight" description="Accounts, health, audits, and simulation." />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Users" value={overview?.total_users ?? users.length} />
-        <StatCard title="Active" value={overview?.active_users ?? users.filter((u) => u.is_active).length} accent="bg-emerald-500/15 text-emerald-300" />
-        <StatCard title="Open Incidents" value={overview?.open_incidents ?? 0} accent="bg-red-500/15 text-red-300" />
-        <StatCard title="Audit Events" value={overview?.audit_events_24h ?? 0} accent="bg-amber-500/15 text-amber-300" />
+        <StatCard title="Users" value={overview?.total_users ?? users.length} accent="bg-emerald-50 text-emerald-700" />
+        <StatCard title="Active" value={overview?.active_users ?? users.filter((u) => u.is_active).length} accent="bg-sky-50 text-sky-700" />
+        <StatCard title="Open" value={overview?.open_incidents ?? 0} accent="bg-rose-50 text-rose-700" />
+        <StatCard title="Audit" value={overview?.audit_events_24h ?? 0} accent="bg-amber-50 text-amber-700" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <div className="text-xs uppercase tracking-[0.35em] text-calm/80">Monitoring</div>
-                <h2 className="mt-2 text-2xl font-semibold">System Health and Simulation</h2>
+                <div className="text-xs uppercase tracking-[0.35em] text-slate-500">Health</div>
+                <div className="mt-1 text-xl font-semibold text-slate-950">{simulation?.is_running ? 'Running' : 'Paused'}</div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => void refreshMonitoring()} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10">
+                <button onClick={() => void refreshMonitoring()} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100">
                   Refresh
                 </button>
-                <button onClick={() => void stepSimulation()} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10">
-                  Step Simulation
+                <button onClick={() => void stepSimulation()} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+                  Step
                 </button>
-                <button onClick={() => void startSimulation()} className="rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-200 ring-1 ring-emerald-500/30 hover:bg-emerald-500/25">
+                <button onClick={() => void startSimulation()} className="rounded-2xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">
                   Start
                 </button>
-                <button onClick={() => void stopSimulation()} className="rounded-xl bg-red-500/15 px-3 py-2 text-xs font-semibold text-red-200 ring-1 ring-red-500/30 hover:bg-red-500/25">
+                <button onClick={() => void stopSimulation()} className="rounded-2xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">
                   Stop
                 </button>
               </div>
             </div>
 
-            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              <Tile label="Simulation" value={simulation?.is_running ? 'running' : 'paused'} />
-              <Tile label="Tick" value={simulation ? `#${simulation.tick}` : '—'} />
-              <Tile label="Scenario" value={simulation?.scenario_name ?? 'baseline'} />
-              <Tile label="Server" value={health?.server_status ?? 'unknown'} />
-              <Tile label="Database" value={health?.database_status ?? 'unknown'} />
-              <Tile label="WebSocket" value={health?.websocket_status ?? 'unknown'} />
-              <Tile label="Memory" value={health ? `${health.memory_usage_mb} MB` : '—'} />
-              <Tile label="CPU" value={health ? `${health.cpu_usage_percent}%` : '—'} />
-              <Tile label="Connections" value={health ? `${health.open_connections}` : '—'} />
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <Mini label="Tick" value={simulation ? `#${simulation.tick}` : '—'} />
+              <Mini label="Scenario" value={simulation?.scenario_name ?? 'baseline'} />
+              <Mini label="Server" value={health?.server_status ?? 'unknown'} />
+              <Mini label="DB" value={health?.database_status ?? 'unknown'} />
+              <Mini label="WS" value={health?.websocket_status ?? 'unknown'} />
+              <Mini label="CPU" value={health ? `${health.cpu_usage_percent}%` : '—'} />
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-            <div className="text-xs uppercase tracking-[0.35em] text-calm/80">User Management</div>
-            <h2 className="mt-2 text-2xl font-semibold">Accounts and access levels</h2>
-            <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <Badge label={`ADMIN ${roleCounts.admin}`} tone="bg-red-500/15 text-red-200 ring-red-500/30" />
-              <Badge label={`LEAD ${roleCounts.leader}`} tone="bg-calm/15 text-calm ring-calm/30" />
-              <Badge label={`VOL ${roleCounts.volunteer}`} tone="bg-amber-500/15 text-amber-200 ring-amber-500/30" />
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs uppercase tracking-[0.35em] text-slate-500">Users</div>
+                <div className="mt-1 text-xl font-semibold text-slate-950">Access</div>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <Badge label={`ADM ${roleCounts.admin}`} tone="bg-rose-50 text-rose-700 ring-rose-200" />
+                <Badge label={`LEAD ${roleCounts.leader}`} tone="bg-sky-50 text-sky-700 ring-sky-200" />
+                <Badge label={`VOL ${roleCounts.volunteer}`} tone="bg-emerald-50 text-emerald-700 ring-emerald-200" />
+              </div>
             </div>
 
-            <div className="mt-5 overflow-hidden rounded-3xl border border-white/10">
-              <table className="min-w-full divide-y divide-white/10 text-left text-sm">
-                <thead className="bg-white/5 text-slate-300">
+            <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                <thead className="bg-slate-50 text-slate-500">
                   <tr>
                     <th className="px-4 py-3">User</th>
                     <th className="px-4 py-3">Role</th>
-                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">State</th>
                     <th className="px-4 py-3">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 bg-slate-950/60">
+                <tbody className="divide-y divide-slate-200 bg-white">
                   {users.map((user) => (
                     <tr key={user.id}>
                       <td className="px-4 py-3">
-                        <div className="font-medium">{user.full_name}</div>
-                        <div className="text-xs text-slate-400">{user.email}</div>
+                        <div className="font-medium text-slate-950">{user.full_name}</div>
+                        <div className="text-xs text-slate-500">{user.email}</div>
                       </td>
-                      <td className="px-4 py-3">{user.role}</td>
-                      <td className="px-4 py-3">{user.is_active ? 'Active' : 'Inactive'}</td>
+                      <td className="px-4 py-3 text-slate-700">{user.role}</td>
+                      <td className="px-4 py-3 text-slate-700">{user.is_active ? 'Active' : 'Inactive'}</td>
                       <td className="px-4 py-3">
                         <button
                           onClick={() => void toggleActive(user.id, !user.is_active)}
-                          className="rounded-xl bg-white/10 px-3 py-2 text-xs font-semibold hover:bg-white/15"
+                          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                         >
-                          {user.is_active ? 'Deactivate' : 'Activate'}
+                          {user.is_active ? 'Disable' : 'Enable'}
                         </button>
                       </td>
                     </tr>
@@ -170,49 +169,34 @@ export function AdminPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-            <div className="text-xs uppercase tracking-[0.35em] text-calm/80">Operational Timeline</div>
-            <h2 className="mt-2 text-2xl font-semibold">Recent Simulation Events</h2>
-            <div className="mt-4 space-y-3">
-              {timeline.slice(0, 10).map((event) => (
-                <div key={event.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="font-medium">{event.title}</div>
-                    <Badge label={event.severity.toUpperCase()} tone="bg-white/10 text-slate-200 ring-white/10" />
-                  </div>
-                  <div className="mt-2 text-sm text-slate-400">{event.narrative}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-            <div className="text-xs uppercase tracking-[0.35em] text-calm/80">Audit Log</div>
-            <div className="mt-4 space-y-3">
-              {auditLogs.slice(0, 12).map((entry) => (
-                <div key={entry.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="font-medium">{entry.action}</div>
-                    <Badge label={entry.severity.toUpperCase()} tone="bg-white/10 text-slate-200 ring-white/10" />
-                  </div>
-                  <div className="mt-2 text-sm text-slate-400">
-                    {entry.entity_type} {entry.entity_id ?? 'n/a'} · {new Date(entry.created_at).toLocaleString()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <Panel title="Timeline" items={timeline.slice(0, 10).map((event) => `${event.title} · ${event.severity}`)} />
+          <Panel title="Audit" items={auditLogs.slice(0, 10).map((entry) => `${entry.action} · ${entry.entity_type} ${entry.entity_id ?? 'n/a'}`)} />
         </div>
       </div>
     </div>
   )
 }
 
-function Tile({ label, value }: { label: string; value: string }) {
+function Mini({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-slate-950/70 p-4">
-      <div className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</div>
-      <div className="mt-2 text-lg font-semibold">{value}</div>
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <div className="text-[11px] uppercase tracking-[0.25em] text-slate-500">{label}</div>
+      <div className="mt-1 text-sm font-semibold text-slate-950">{value}</div>
+    </div>
+  )
+}
+
+function Panel({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+      <div className="text-xs uppercase tracking-[0.35em] text-slate-500">{title}</div>
+      <div className="mt-4 space-y-2">
+        {items.map((item) => (
+          <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+            {item}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

@@ -3,7 +3,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.deps import db_session, get_current_user
+from app.api.deps import db_session, get_current_user, require_role
+from app.core.security import Role
 from app.models import User
 from app.schemas import (
     RoadClosureRead,
@@ -24,32 +25,32 @@ def state(_: User = Depends(get_current_user), db: Session = Depends(db_session)
 
 
 @router.post("/start", response_model=SimulationStateRead)
-def start(_: User = Depends(get_current_user), db: Session = Depends(db_session)) -> SimulationStateRead:
+def start(_: User = Depends(require_role(Role.COUNTY_ADMIN, Role.ADMINISTRATOR)), db: Session = Depends(db_session)) -> SimulationStateRead:
     return SimulationStateRead.model_validate(SimulationService(db).start())
 
 
 @router.post("/stop", response_model=SimulationStateRead)
-def stop(_: User = Depends(get_current_user), db: Session = Depends(db_session)) -> SimulationStateRead:
+def stop(_: User = Depends(require_role(Role.COUNTY_ADMIN, Role.ADMINISTRATOR)), db: Session = Depends(db_session)) -> SimulationStateRead:
     return SimulationStateRead.model_validate(SimulationService(db).stop())
 
 
 @router.post("/step", response_model=dict)
-def step(_: User = Depends(get_current_user), db: Session = Depends(db_session)) -> dict:
+def step(_: User = Depends(require_role(Role.COUNTY_ADMIN, Role.ADMINISTRATOR)), db: Session = Depends(db_session)) -> dict:
     return SimulationService(db).step()
 
 
 @router.post("/reset", response_model=SimulationStateRead)
-def reset(_: User = Depends(get_current_user), db: Session = Depends(db_session)) -> SimulationStateRead:
+def reset(_: User = Depends(require_role(Role.COUNTY_ADMIN, Role.ADMINISTRATOR)), db: Session = Depends(db_session)) -> SimulationStateRead:
     return SimulationStateRead.model_validate(SimulationService(db).reset())
 
 
 @router.post("/scenario/{scenario_name}", response_model=SimulationStateRead)
-def scenario(scenario_name: str, _: User = Depends(get_current_user), db: Session = Depends(db_session)) -> SimulationStateRead:
+def scenario(scenario_name: str, _: User = Depends(require_role(Role.COUNTY_ADMIN, Role.ADMINISTRATOR)), db: Session = Depends(db_session)) -> SimulationStateRead:
     return SimulationStateRead.model_validate(SimulationService(db).set_scenario(scenario_name))
 
 
 @router.post("/speed/{multiplier}", response_model=SimulationStateRead)
-def speed(multiplier: int, _: User = Depends(get_current_user), db: Session = Depends(db_session)) -> SimulationStateRead:
+def speed(multiplier: int, _: User = Depends(require_role(Role.COUNTY_ADMIN, Role.ADMINISTRATOR)), db: Session = Depends(db_session)) -> SimulationStateRead:
     return SimulationStateRead.model_validate(SimulationService(db).set_speed(multiplier))
 
 

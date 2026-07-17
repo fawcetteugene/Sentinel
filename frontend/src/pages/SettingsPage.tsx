@@ -64,6 +64,8 @@ function preferenceKey(userId: number) {
 export function SettingsPage() {
   const { user, updateProfile } = useAuth()
   const userId = user?.id ?? null
+  const canSeeAdminPanel = user?.role === 'county_admin' || user?.role === 'administrator'
+  const availablePanels: PanelKey[] = canSeeAdminPanel ? ['citizen', 'responder', 'admin'] : ['citizen', 'responder']
   const [panel, setPanel] = useState<PanelKey>('citizen')
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPreferences, setSavingPreferences] = useState(false)
@@ -82,9 +84,10 @@ export function SettingsPage() {
   const activeRole = useMemo(() => {
     switch (user?.role) {
       case 'community_volunteer':
-        return 'responder' as const
       case 'community_leader':
-        return 'admin' as const
+      case 'dispatcher':
+      case 'field_responder':
+        return 'responder' as const
       case 'county_admin':
       case 'administrator':
         return 'admin' as const
@@ -96,6 +99,12 @@ export function SettingsPage() {
   useEffect(() => {
     setPanel(activeRole)
   }, [activeRole])
+
+  useEffect(() => {
+    if (!availablePanels.includes(panel)) {
+      setPanel(activeRole)
+    }
+  }, [activeRole, availablePanels, panel])
 
   useEffect(() => {
     setProfile({
@@ -167,8 +176,8 @@ export function SettingsPage() {
     <div className="space-y-6 p-4 lg:p-6">
       <SectionHeader
         eyebrow="Settings"
-        title="Citizen, responder, and admin controls"
-        description="Keep the account simple for emergencies: profile details are saved centrally, while device preferences stay local for fast access."
+        title={canSeeAdminPanel ? 'Citizen, responder, and admin controls' : 'Citizen and responder controls'}
+        description="Profile details are saved centrally, while device preferences stay local for fast access."
       />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1.15fr]">
@@ -244,8 +253,8 @@ export function SettingsPage() {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-2 md:grid-cols-3">
-              {(Object.keys(panelMeta) as PanelKey[]).map((key) => {
+            <div className={`mt-5 grid gap-2 ${availablePanels.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+                {availablePanels.map((key) => {
                 const isActive = key === panel
                 return (
                   <button
@@ -318,7 +327,11 @@ export function SettingsPage() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
-                {panel === 'citizen' ? 'Citizen settings keep the reporting path short and easy to use during an emergency.' : panel === 'responder' ? 'Responder settings help volunteers share location, stay on duty, and arrive with the right transport.' : 'Admin settings keep county alerts, hotline routing, and escalation preferences easy to manage.'}
+                {panel === 'citizen'
+                  ? 'Citizen settings keep the reporting path short and easy to use during an emergency.'
+                  : panel === 'responder'
+                    ? 'Responder settings help volunteers share location, stay on duty, and arrive with the right transport.'
+                    : 'County settings keep alerts, hotline routing, and escalation preferences easy to manage.'}
               </div>
 
               <button

@@ -167,7 +167,7 @@ export function LiveDemoPage() {
 
   return (
     <div className="space-y-6 p-4 lg:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4 rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-glow">
+      <div className="flex flex-wrap items-start justify-between gap-4 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
             <Badge label={state?.is_running ? 'LIVE' : 'PAUSED'} tone={state?.is_running ? 'bg-emerald-500/15 text-emerald-200 ring-emerald-500/30' : 'bg-amber-500/15 text-amber-200 ring-amber-500/30'} />
@@ -177,40 +177,38 @@ export function LiveDemoPage() {
           <div>
             <div className="text-xs uppercase tracking-[0.35em] text-calm/80">Live Demo Mode</div>
             <h1 className="mt-2 text-4xl font-semibold">Sentinel AI Simulation Control Room</h1>
-            <p className="mt-2 max-w-3xl text-sm text-slate-400">
-              A single, organized live surface for incidents, missions, weather, road closures, resource pressure, and system health. Everything here is mock data that changes in real time.
-            </p>
+            <p className="mt-2 max-w-3xl text-sm text-slate-600">Live simulation for incidents, missions, weather, closures, and health.</p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => void startScenario()} className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-500/30 hover:bg-emerald-500/25">
+          <button onClick={() => void startScenario()} className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700">
             <PlayIcon className="h-4 w-4" />
             Start
           </button>
-          <button onClick={() => void pauseScenario()} className="inline-flex items-center gap-2 rounded-2xl bg-amber-500/15 px-4 py-3 text-sm font-semibold text-amber-200 ring-1 ring-amber-500/30 hover:bg-amber-500/25">
+          <button onClick={() => void pauseScenario()} className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-4 py-3 text-sm font-semibold text-white hover:bg-amber-600">
             <PauseIcon className="h-4 w-4" />
             Pause
           </button>
-          <button onClick={() => void stepScenario()} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10">
+          <button onClick={() => void stepScenario()} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
             <ForwardIcon className="h-4 w-4" />
             Step
           </button>
-          <button onClick={() => void resetScenario()} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10">
+          <button onClick={() => void resetScenario()} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
             <ArrowPathIcon className="h-4 w-4" />
             Reset
           </button>
-          <button onClick={() => void autoDispatch()} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10">
+          <button onClick={() => void autoDispatch()} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
             <BoltIcon className="h-4 w-4" />
             Dispatch
           </button>
-          <button onClick={() => void setSpeed(2)} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10">
+          <button onClick={() => void setSpeed(2)} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
             x2
           </button>
-          <button onClick={() => void setSpeed(5)} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10">
+          <button onClick={() => void setSpeed(5)} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
             x5
           </button>
-          <button onClick={() => void refreshAll()} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10">
+          <button onClick={() => void refreshAll()} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
             Refresh
           </button>
         </div>
@@ -226,7 +224,7 @@ export function LiveDemoPage() {
             </div>
             <div className="space-y-2">
               {(world?.commands ?? mission?.operational_notes ?? []).slice(0, 4).map((command, index) => (
-                <div key={`${command}-${index}`} className="rounded-2xl border border-white/10 bg-slate-950/70 p-3 text-sm text-slate-300">
+                <div key={`${command}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
                   {command}
                 </div>
               ))}
@@ -242,7 +240,7 @@ export function LiveDemoPage() {
                 <button
                   key={scenario}
                   onClick={() => void setScenario(scenario)}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
                 >
                   {label}
                 </button>
@@ -280,12 +278,12 @@ export function LiveDemoPage() {
             <Panel title="Mission Control" subtitle={mission?.summary ?? 'Waiting for mission control data'}>
               <div className="space-y-3">
                 {mission?.recommended_actions.slice(0, 4).map((action) => (
-                  <div key={action.incident_id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                  <div key={action.incident_id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="font-medium">{action.incident_title}</div>
                       <Badge label={action.priority} tone="bg-white/10 text-slate-200 ring-white/10" />
                     </div>
-                    <div className="mt-2 text-sm text-slate-300">{action.instructions}</div>
+                    <div className="mt-2 text-sm text-slate-700">{action.instructions}</div>
                   </div>
                 ))}
               </div>
@@ -326,12 +324,12 @@ export function LiveDemoPage() {
           <Panel title="Road Closures" subtitle="Active weather and access restrictions">
             <div className="space-y-3">
               {closures.slice(0, 4).map((closure) => (
-                <div key={closure.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                <div key={closure.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-2">
                     <div className="font-medium">{closure.title}</div>
                     <Badge label={closure.is_active ? 'ACTIVE' : 'CLEARED'} tone={closure.is_active ? 'bg-red-500/15 text-red-200 ring-red-500/30' : 'bg-emerald-500/15 text-emerald-200 ring-emerald-500/30'} />
                   </div>
-                  <div className="mt-2 text-sm text-slate-400">{closure.reason}</div>
+                  <div className="mt-2 text-sm text-slate-600">{closure.reason}</div>
                 </div>
               ))}
             </div>
@@ -340,16 +338,16 @@ export function LiveDemoPage() {
           <Panel title="Mission Queue" subtitle="Auto-generated assignments from the simulation">
             <div className="space-y-3">
               {missionQueue.slice(0, 5).map((missionItem, index) => (
-                <div key={`${missionItem.title}-${index}`} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                <div key={`${missionItem.title}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <div className="font-medium">{missionItem.title}</div>
-                      <div className="text-sm text-slate-400">{missionItem.incident_title}</div>
+                      <div className="text-sm text-slate-600">{missionItem.incident_title}</div>
                     </div>
                     <Badge label={missionItem.status.toUpperCase()} tone="bg-white/10 text-slate-200 ring-white/10" />
                   </div>
                   <div className="mt-2 text-xs text-slate-500">Progress {missionItem.progress_percent}% · ETA {missionItem.eta_minutes ?? 'TBD'} min</div>
-                  <div className="mt-2 text-sm text-slate-300">{missionItem.activity}</div>
+                  <div className="mt-2 text-sm text-slate-700">{missionItem.activity}</div>
                 </div>
               ))}
             </div>
@@ -361,11 +359,11 @@ export function LiveDemoPage() {
         <Panel title="Current Incidents" subtitle="Top incidents sorted by live analysis">
           <div className="space-y-3">
             {incidents.slice(0, 8).map((incident) => (
-              <div key={incident.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+              <div key={incident.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <div className="font-medium">{incident.title}</div>
-                    <div className="text-sm text-slate-400">{incident.hazard_type}</div>
+                    <div className="text-sm text-slate-600">{incident.hazard_type}</div>
                   </div>
                   <Badge label={`${incident.severity.toUpperCase()} · ${incident.status.toUpperCase()}`} tone="bg-calm/15 text-calm ring-calm/30" />
                 </div>
@@ -377,11 +375,11 @@ export function LiveDemoPage() {
         <Panel title="Resources" subtitle="Vehicles and field assets in motion">
           <div className="space-y-3">
             {resources.slice(0, 8).map((resource) => (
-              <div key={resource.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+              <div key={resource.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <div className="font-medium">{resource.name}</div>
-                    <div className="text-sm text-slate-400">{resource.kind}</div>
+                    <div className="text-sm text-slate-600">{resource.kind}</div>
                   </div>
                   <Badge label={resource.status.toUpperCase()} tone="bg-white/10 text-slate-200 ring-white/10" />
                 </div>
@@ -395,25 +393,25 @@ export function LiveDemoPage() {
         <Panel title="Operational Timeline" subtitle="Recent simulation history">
           <div className="max-h-[420px] overflow-auto pr-1">
             {timeline.slice(0, 12).map((event) => (
-              <div key={event.id} className="mb-3 rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+              <div key={event.id} className="mb-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center justify-between gap-2">
                   <div className="font-medium">{event.title}</div>
                   <Badge label={event.severity.toUpperCase()} tone="bg-white/10 text-slate-200 ring-white/10" />
                 </div>
-                <div className="mt-2 text-sm text-slate-400">{event.narrative}</div>
+                <div className="mt-2 text-sm text-slate-600">{event.narrative}</div>
               </div>
             ))}
           </div>
         </Panel>
 
         <Panel title="Demo Notes" subtitle="How to present this surface">
-          <div className="space-y-3 text-sm leading-7 text-slate-300">
-            <p>The simulation runs on mock data and updates the dashboard, weather, closures, and timeline continuously.</p>
-            <p>Use Start, Pause, and Step to control the pace. Dispatch generates missions so the board keeps moving.</p>
-            <p>The page is organized into one live control room so a judge can understand the entire operating picture at a glance.</p>
+          <div className="space-y-3 text-sm leading-7 text-slate-600">
+            <p>Mock data updates incidents, weather, closures, and timeline continuously.</p>
+            <p>Use Start, Pause, Step, and Dispatch to control the simulation.</p>
+            <p>The page stays organized as one control room.</p>
             <p>
-              If you want a lighter overview, go back to the <Link to="/" className="text-calm underline underline-offset-4">Dashboard</Link> or inspect the
-              <Link to="/weather" className="ml-1 text-calm underline underline-offset-4">Weather Center</Link>.
+              For a lighter view, go back to the <Link to="/" className="text-emerald-700 underline underline-offset-4">Dashboard</Link> or check
+              the <Link to="/weather" className="ml-1 text-emerald-700 underline underline-offset-4">Weather</Link> page.
             </p>
           </div>
         </Panel>
@@ -424,9 +422,9 @@ export function LiveDemoPage() {
 
 function Panel({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
-    <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-      <div className="text-xs uppercase tracking-[0.35em] text-calm/80">{title}</div>
-      {subtitle ? <div className="mt-2 text-sm text-slate-400">{subtitle}</div> : null}
+    <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+      <div className="text-xs uppercase tracking-[0.35em] text-slate-500">{title}</div>
+      {subtitle ? <div className="mt-2 text-sm text-slate-600">{subtitle}</div> : null}
       <div className="mt-4">{children}</div>
     </div>
   )
@@ -434,9 +432,9 @@ function Panel({ title, subtitle, children }: { title: string; subtitle?: string
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-slate-950/70 p-3">
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
       <div className="text-[11px] uppercase tracking-[0.25em] text-slate-500">{label}</div>
-      <div className="mt-1 text-sm font-semibold text-slate-100">{value}</div>
+      <div className="mt-1 text-sm font-semibold text-slate-950">{value}</div>
     </div>
   )
 }

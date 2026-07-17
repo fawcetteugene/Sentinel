@@ -19,44 +19,41 @@ export function WeatherPage() {
 
   return (
     <div className="space-y-6 p-4 lg:p-6">
-      <SectionHeader
-        eyebrow="Weather and roads"
-        title="Conditions that affect communities"
-        description="Weather changes automatically, road closures open and close, and the system health view keeps the simulation honest."
-      />
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Condition" value={weather?.condition ?? 'unknown'} detail={weather?.summary ?? 'Waiting for the first weather snapshot.'} />
-        <StatCard title="Temperature" value={weather ? `${weather.temperature_c.toFixed(1)}°C` : '—'} accent="bg-amber-500/15 text-amber-300" />
-        <StatCard title="Rain" value={weather ? `${weather.rain_mm.toFixed(1)} mm` : '—'} accent="bg-sky-500/15 text-sky-300" />
-        <StatCard title="Lightning Risk" value={weather ? `${weather.lightning_risk}%` : '—'} accent="bg-red-500/15 text-red-300" />
+      <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+        <SectionHeader eyebrow="Weather" title="Conditions" description="Weather, roads, and system health." />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="space-y-6">
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-            <div className="flex items-start justify-between gap-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard title="Condition" value={weather?.condition ?? 'unknown'} accent="bg-emerald-50 text-emerald-700" />
+        <StatCard title="Temp" value={weather ? `${weather.temperature_c.toFixed(1)}°C` : '—'} accent="bg-amber-50 text-amber-700" />
+        <StatCard title="Rain" value={weather ? `${weather.rain_mm.toFixed(1)} mm` : '—'} accent="bg-sky-50 text-sky-700" />
+        <StatCard title="Risk" value={weather ? `${weather.lightning_risk}%` : '—'} accent="bg-rose-50 text-rose-700" />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-4">
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <div className="text-xs uppercase tracking-[0.35em] text-calm/80">Current Conditions</div>
-                <h2 className="mt-2 text-2xl font-semibold">Operational Weather</h2>
+                <div className="text-xs uppercase tracking-[0.35em] text-slate-500">Current</div>
+                <div className="mt-1 text-xl font-semibold text-slate-950">{weather?.summary ?? 'Waiting for snapshot'}</div>
               </div>
               <div className="flex flex-wrap gap-2">
-                {weather?.flood_warning ? <Badge label="FLOOD WARNING" tone="bg-red-500/15 text-red-200 ring-red-500/30" /> : null}
-                {weather?.heatwave_warning ? <Badge label="HEATWAVE" tone="bg-orange-500/15 text-orange-200 ring-orange-500/30" /> : null}
+                {weather?.flood_warning ? <Badge label="FLOOD" tone="bg-rose-50 text-rose-700 ring-rose-200" /> : null}
+                {weather?.heatwave_warning ? <Badge label="HEAT" tone="bg-amber-50 text-amber-700 ring-amber-200" /> : null}
               </div>
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <Metric label="Humidity" value={weather ? `${weather.humidity_percent}%` : '—'} />
-              <Metric label="Wind" value={weather ? `${weather.wind_kph} kph` : '—'} />
-              <Metric label="Visibility" value={weather ? `${weather.visibility_km.toFixed(1)} km` : '—'} />
-              <Metric label="Tick" value={weather ? `#${weather.id}` : '—'} />
+              <Mini label="Humidity" value={weather ? `${weather.humidity_percent}%` : '—'} />
+              <Mini label="Wind" value={weather ? `${weather.wind_kph} kph` : '—'} />
+              <Mini label="Visibility" value={weather ? `${weather.visibility_km.toFixed(1)} km` : '—'} />
+              <Mini label="Tick" value={weather ? `#${weather.id}` : '—'} />
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-            <div className="text-xs uppercase tracking-[0.35em] text-calm/80">Weather Timeline</div>
-            <h2 className="mt-2 text-2xl font-semibold">Recent Atmospheric History</h2>
-            <div className="mt-5">
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <SectionHeader eyebrow="Trend" title="Weather timeline" />
+            <div className="mt-4">
               <Timeline
                 items={timeline.slice(0, 8).map((entry) => ({
                   label: `${entry.condition.toUpperCase()} · ${entry.temperature_c.toFixed(1)}°C`,
@@ -67,62 +64,55 @@ export function WeatherPage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-            <div className="text-xs uppercase tracking-[0.35em] text-calm/80">Timeline</div>
-            <h2 className="mt-2 text-2xl font-semibold">Operational Event Stream</h2>
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <SectionHeader eyebrow="Events" title="Operational stream" />
             <div className="mt-4 space-y-3">
               {events.slice(0, 8).map((event) => (
-                <div key={event.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                <div key={event.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="font-medium">{event.title}</div>
-                    <Badge label={event.severity.toUpperCase()} tone="bg-white/10 text-slate-200 ring-white/10" />
+                    <div className="font-medium text-slate-950">{event.title}</div>
+                    <Badge label={event.severity.toUpperCase()} tone="bg-emerald-50 text-emerald-700 ring-emerald-200" />
                   </div>
-                  <div className="mt-2 text-sm text-slate-400">{event.narrative}</div>
+                  <div className="mt-2 text-sm text-slate-600">{event.narrative}</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-            <div className="text-xs uppercase tracking-[0.35em] text-calm/80">Road Closures</div>
-            <h2 className="mt-2 text-2xl font-semibold">Active Infrastructure Restrictions</h2>
+        <div className="space-y-4">
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <SectionHeader eyebrow="Roads" title="Closures" />
             <div className="mt-4 space-y-3">
               {closures.length ? (
                 closures.map((closure) => (
-                  <div key={closure.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                  <div key={closure.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="font-medium">{closure.title}</div>
-                      <Badge label={closure.is_active ? 'ACTIVE' : 'CLEARED'} tone={closure.is_active ? 'bg-red-500/15 text-red-200 ring-red-500/30' : 'bg-emerald-500/15 text-emerald-200 ring-emerald-500/30'} />
+                      <div className="font-medium text-slate-950">{closure.title}</div>
+                      <Badge label={closure.is_active ? 'ACTIVE' : 'CLEARED'} tone={closure.is_active ? 'bg-rose-50 text-rose-700 ring-rose-200' : 'bg-emerald-50 text-emerald-700 ring-emerald-200'} />
                     </div>
-                    <div className="mt-2 text-sm text-slate-400">{closure.reason}</div>
+                    <div className="mt-2 text-sm text-slate-600">{closure.reason}</div>
                   </div>
                 ))
               ) : (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-4 text-sm text-slate-400">
-                  No active closures at the moment.
-                </div>
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">No closures.</div>
               )}
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-glow">
-            <div className="text-xs uppercase tracking-[0.35em] text-calm/80">System Health</div>
-            <h2 className="mt-2 text-2xl font-semibold">Command Center Status</h2>
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <SectionHeader eyebrow="Health" title="System" />
             {health ? (
-              <div className="mt-4 grid gap-3">
-                <Metric label="Server" value={health.server_status} />
-                <Metric label="Database" value={health.database_status} />
-                <Metric label="WebSocket" value={health.websocket_status} />
-                <Metric label="Simulation" value={health.simulation_status} />
-                <Metric label="Memory" value={`${health.memory_usage_mb} MB`} />
-                <Metric label="CPU" value={`${health.cpu_usage_percent}%`} />
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <Mini label="Server" value={health.server_status} />
+                <Mini label="DB" value={health.database_status} />
+                <Mini label="WS" value={health.websocket_status} />
+                <Mini label="Sim" value={health.simulation_status} />
+                <Mini label="Memory" value={`${health.memory_usage_mb} MB`} />
+                <Mini label="CPU" value={`${health.cpu_usage_percent}%`} />
               </div>
             ) : (
-              <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-4 text-sm text-slate-400">
-                System health data is not available yet.
-              </div>
+              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">No health snapshot.</div>
             )}
           </div>
         </div>
@@ -131,11 +121,11 @@ export function WeatherPage() {
   )
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Mini({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-slate-950/70 p-4">
-      <div className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</div>
-      <div className="mt-2 text-lg font-semibold text-slate-100">{value}</div>
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <div className="text-[11px] uppercase tracking-[0.25em] text-slate-500">{label}</div>
+      <div className="mt-1 text-sm font-semibold text-slate-950">{value}</div>
     </div>
   )
 }

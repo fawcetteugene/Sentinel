@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import {
   ArrowRightIcon,
-  BellAlertIcon,
   BoltIcon,
   MapIcon,
   MegaphoneIcon,
@@ -13,51 +12,88 @@ import {
 } from '@heroicons/react/24/outline'
 import { createOperationsSocket } from '@/lib/ws'
 import { useAuth } from '@/context/AuthContext'
-import { useCurrentWeatherQuery, useDashboardQuery, useResourcesQuery, queryKeys } from '@/lib/queries'
+import { useAnalyticsQuery, useCurrentWeatherQuery, useDashboardQuery, useResourcesQuery, queryKeys } from '@/lib/queries'
 import type { OperationalEvent, Resource } from '@/types'
 import { StatCard } from '@/components/StatCard'
 import { SectionHeader } from '@/components/SectionHeader'
-import { SeverityBadge } from '@/components/Badge'
 import { LiveEventList } from '@/components/LiveEventList'
 import { MapPanel } from '@/components/MapPanel'
+import { BarChart } from '@/components/Charts'
 
 type DashboardMode = 'public' | 'responder' | 'leader' | 'county'
 
-const modeCopy: Record<DashboardMode, { eyebrow: string; title: string; description: string; primary: { to: string; label: string; icon: typeof MegaphoneIcon }; secondary: { to: string; label: string; icon: typeof MapIcon } }> = {
+const modeCopy: Record<
+  DashboardMode,
+  {
+    eyebrow: string
+    title: string
+    subtitle: string
+    primary: { to: string; label: string; icon: typeof MegaphoneIcon }
+    secondary: { to: string; label: string; icon: typeof MapIcon }
+  }
+> = {
   public: {
     eyebrow: 'Public view',
-    title: 'Fast help, public alerts, and safe routes',
-    description: 'Use this view to report a problem, find nearby help, and follow alerts without extra noise.',
-    primary: { to: '/report', label: 'Report emergency', icon: MegaphoneIcon },
-    secondary: { to: '/map', label: 'Open map', icon: MapIcon },
+    title: 'Report fast. See what matters.',
+    subtitle: 'Emergency reporting, safe routes, shelters, and alerts.',
+    primary: { to: '/report', label: 'Report', icon: MegaphoneIcon },
+    secondary: { to: '/map', label: 'Map', icon: MapIcon },
   },
   responder: {
     eyebrow: 'Responder view',
-    title: 'Volunteer missions and local response coordination',
-    description: 'Focus on assignments, available resources, and the incidents that need people on the ground.',
-    primary: { to: '/assignments', label: 'View missions', icon: UserGroupIcon },
-    secondary: { to: '/incidents', label: 'Review incidents', icon: ShieldCheckIcon },
+    title: 'Missions, incidents, and nearby help.',
+    subtitle: 'Volunteer operations, assignments, and live resource movement.',
+    primary: { to: '/assignments', label: 'Missions', icon: UserGroupIcon },
+    secondary: { to: '/incidents', label: 'Incidents', icon: ShieldCheckIcon },
   },
   leader: {
     eyebrow: 'Leader view',
-    title: 'Verify reports, guide volunteers, and send briefings',
-    description: 'Track what is happening, confirm incidents, and direct the local response with simple actions.',
-    primary: { to: '/commander', label: 'Open missions', icon: BoltIcon },
-    secondary: { to: '/reports', label: 'Open briefs', icon: BellAlertIcon },
+    title: 'Verify, coordinate, brief.',
+    subtitle: 'Operational incidents, missions, and local escalation paths.',
+    primary: { to: '/commander', label: 'Commander', icon: BoltIcon },
+    secondary: { to: '/reports', label: 'Briefs', icon: ShieldCheckIcon },
   },
   county: {
     eyebrow: 'County view',
-    title: 'County overview with live community operations',
-    description: 'See the highest-risk areas, operational health, and response coverage at a glance.',
-    primary: { to: '/admin', label: 'Open county console', icon: ShieldCheckIcon },
-    secondary: { to: '/analytics', label: 'View analytics', icon: BoltIcon },
+    title: 'Full oversight, live metrics, and audit.',
+    subtitle: 'All incidents, operations, analytics, and administration.',
+    primary: { to: '/admin', label: 'County', icon: ShieldCheckIcon },
+    secondary: { to: '/analytics', label: 'Analytics', icon: BoltIcon },
   },
+}
+
+const roleOrder: Record<DashboardMode, Array<{ label: string; value: number; tone: string }>> = {
+  public: [
+    { label: 'Safe', value: 0, tone: 'bg-emerald-50 text-emerald-700' },
+    { label: 'Missing', value: 0, tone: 'bg-rose-50 text-rose-700' },
+    { label: 'Shelters', value: 0, tone: 'bg-sky-50 text-sky-700' },
+    { label: 'Weather', value: 0, tone: 'bg-amber-50 text-amber-700' },
+  ],
+  responder: [
+    { label: 'Volunteers', value: 0, tone: 'bg-emerald-50 text-emerald-700' },
+    { label: 'Roads', value: 0, tone: 'bg-rose-50 text-rose-700' },
+    { label: 'Resources', value: 0, tone: 'bg-cyan-50 text-cyan-700' },
+    { label: 'Weather', value: 0, tone: 'bg-amber-50 text-amber-700' },
+  ],
+  leader: [
+    { label: 'Incidents', value: 0, tone: 'bg-rose-50 text-rose-700' },
+    { label: 'Volunteers', value: 0, tone: 'bg-emerald-50 text-emerald-700' },
+    { label: 'Risk villages', value: 0, tone: 'bg-amber-50 text-amber-700' },
+    { label: 'Shelters', value: 0, tone: 'bg-sky-50 text-sky-700' },
+  ],
+  county: [
+    { label: 'Open', value: 0, tone: 'bg-rose-50 text-rose-700' },
+    { label: 'Critical', value: 0, tone: 'bg-amber-50 text-amber-700' },
+    { label: 'Volunteers', value: 0, tone: 'bg-emerald-50 text-emerald-700' },
+    { label: 'Assets', value: 0, tone: 'bg-cyan-50 text-cyan-700' },
+  ],
 }
 
 export function DashboardPage() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const summaryQuery = useDashboardQuery()
+  const analyticsQuery = useAnalyticsQuery()
   const resourcesQuery = useResourcesQuery()
   const weatherQuery = useCurrentWeatherQuery()
   const [resources, setResources] = useState<Resource[]>([])
@@ -82,9 +118,10 @@ export function DashboardPage() {
 
   useEffect(() => {
     const socket = createOperationsSocket((event) => {
-      setEvents((current) => [event, ...current].slice(0, 30))
+      setEvents((current) => [event, ...current].slice(0, 18))
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
       void queryClient.invalidateQueries({ queryKey: queryKeys.resources })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.analytics })
     })
     return () => socket.close()
   }, [queryClient])
@@ -98,45 +135,72 @@ export function DashboardPage() {
   }
 
   const summary = summaryQuery.data
+  const analytics = analyticsQuery.data
   const copy = modeCopy[mode]
   const PrimaryIcon = copy.primary.icon
   const SecondaryIcon = copy.secondary.icon
 
-  const topStats =
+  const metrics = {
+    public: [
+      { label: 'Safe', value: summary.people_safe, tone: 'bg-emerald-50 text-emerald-700' },
+      { label: 'Missing', value: summary.people_missing, tone: 'bg-rose-50 text-rose-700' },
+      { label: 'Shelters', value: summary.shelters_open, tone: 'bg-sky-50 text-sky-700' },
+      { label: 'Weather', value: summary.weather_alerts, tone: 'bg-amber-50 text-amber-700' },
+    ],
+    responder: [
+      { label: 'Volunteers', value: summary.volunteers_active, tone: 'bg-emerald-50 text-emerald-700' },
+      { label: 'Roads', value: summary.roads_closed, tone: 'bg-rose-50 text-rose-700' },
+      { label: 'Resources', value: summary.community_resources_available, tone: 'bg-cyan-50 text-cyan-700' },
+      { label: 'Weather', value: summary.weather_alerts, tone: 'bg-amber-50 text-amber-700' },
+    ],
+    leader: [
+      { label: 'Incidents', value: summary.total_active_incidents, tone: 'bg-rose-50 text-rose-700' },
+      { label: 'Volunteers', value: summary.volunteers_active, tone: 'bg-emerald-50 text-emerald-700' },
+      { label: 'Risk villages', value: summary.high_risk_villages, tone: 'bg-amber-50 text-amber-700' },
+      { label: 'Shelters', value: summary.shelters_open, tone: 'bg-sky-50 text-sky-700' },
+    ],
+    county: [
+      { label: 'Open', value: summary.total_active_incidents, tone: 'bg-rose-50 text-rose-700' },
+      { label: 'Critical', value: summary.critical_incidents, tone: 'bg-amber-50 text-amber-700' },
+      { label: 'Volunteers', value: summary.volunteers_active, tone: 'bg-emerald-50 text-emerald-700' },
+      { label: 'Assets', value: summary.community_resources_available, tone: 'bg-cyan-50 text-cyan-700' },
+    ],
+  }[mode]
+
+  const chartData = analytics
+    ? [
+        { title: 'Incidents', points: analytics.incidents_over_time, barColor: 'bg-emerald-500' },
+        { title: 'Response time', points: analytics.response_time, barColor: 'bg-sky-500' },
+        ...(mode === 'county' || mode === 'leader'
+          ? [{ title: 'Severity', points: analytics.severity_distribution, barColor: 'bg-amber-500' }]
+          : []),
+      ]
+    : []
+
+  const shortcuts =
     mode === 'public'
       ? [
-          { title: 'People Safe', value: summary.people_safe, detail: 'Estimated people currently safe', accent: 'bg-emerald-50 text-emerald-700' },
-          { title: 'People Missing', value: summary.people_missing, detail: 'Open missing-person reports', accent: 'bg-rose-50 text-rose-700' },
-          { title: 'Shelters Open', value: summary.shelters_open, detail: 'Churches, schools, mosques, halls', accent: 'bg-sky-50 text-sky-700' },
-          { title: 'Weather Alerts', value: summary.weather_alerts, detail: weatherQuery.data?.summary ?? 'Awaiting weather snapshot', accent: 'bg-amber-50 text-amber-700' },
+          { label: 'Report', to: '/report' },
+          { label: 'Map', to: '/map' },
+          { label: 'Shelters', to: '/resources' },
         ]
       : mode === 'responder'
         ? [
-            { title: 'Volunteers Active', value: summary.volunteers_active, detail: 'Community responders on duty', accent: 'bg-emerald-50 text-emerald-700' },
-            { title: 'Roads Closed', value: summary.roads_closed, detail: 'Blocked or unsafe routes', accent: 'bg-rose-50 text-rose-700' },
-            { title: 'Resources Available', value: summary.community_resources_available, detail: 'Boats, bodabodas, clinics, halls', accent: 'bg-cyan-50 text-cyan-700' },
-            { title: 'Weather Alerts', value: summary.weather_alerts, detail: weatherQuery.data?.summary ?? 'Awaiting weather snapshot', accent: 'bg-amber-50 text-amber-700' },
+            { label: 'Assignments', to: '/assignments' },
+            { label: 'Incidents', to: '/incidents' },
+            { label: 'Map', to: '/map' },
           ]
         : mode === 'leader'
           ? [
-              { title: 'Active Incidents', value: summary.total_active_incidents, detail: 'Reports currently being tracked', accent: 'bg-rose-50 text-rose-700' },
-              { title: 'Volunteers Active', value: summary.volunteers_active, detail: 'Ready for mission dispatch', accent: 'bg-emerald-50 text-emerald-700' },
-              { title: 'High Risk Villages', value: summary.high_risk_villages, detail: 'Villages needing attention', accent: 'bg-amber-50 text-amber-700' },
-              { title: 'Shelters Open', value: summary.shelters_open, detail: 'Places ready to receive families', accent: 'bg-sky-50 text-sky-700' },
+              { label: 'Commander', to: '/commander' },
+              { label: 'Briefs', to: '/reports' },
+              { label: 'Incidents', to: '/incidents' },
             ]
           : [
-              { title: 'Open Incidents', value: summary.total_active_incidents, detail: 'Community-wide incident load', accent: 'bg-rose-50 text-rose-700' },
-              { title: 'Critical Incidents', value: summary.critical_incidents, detail: 'Cases needing escalation', accent: 'bg-amber-50 text-amber-700' },
-              { title: 'Volunteers Active', value: summary.volunteers_active, detail: 'Response coverage today', accent: 'bg-emerald-50 text-emerald-700' },
-              { title: 'Community Assets', value: summary.community_resources_available, detail: 'Vehicles, shelters, clinics, and support', accent: 'bg-cyan-50 text-cyan-700' },
+              { label: 'Admin', to: '/admin' },
+              { label: 'Analytics', to: '/analytics' },
+              { label: 'Search', to: '/search' },
             ]
-
-  const supportStats = [
-    { title: 'Families Displaced', value: summary.families_displaced, detail: 'Need shelter or temporary support', accent: 'bg-orange-50 text-orange-700' },
-    { title: 'Clean Water', value: summary.clean_water, detail: 'Water points and tanks available', accent: 'bg-sky-50 text-sky-700' },
-    { title: 'Food Stocks', value: summary.food_stocks, detail: 'Community stores and kitchens', accent: 'bg-lime-50 text-lime-700' },
-    { title: 'Medical Supplies', value: summary.medical_supplies, detail: 'Clinic and hospital support', accent: 'bg-violet-50 text-violet-700' },
-  ]
 
   return (
     <div className="space-y-6 p-4 lg:p-6">
@@ -145,196 +209,134 @@ export function DashboardPage() {
           <div>
             <div className="text-xs uppercase tracking-[0.35em] text-emerald-700/80">{copy.eyebrow}</div>
             <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950">{copy.title}</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">{copy.description}</p>
+            <p className="mt-2 max-w-3xl text-sm text-slate-600">{copy.subtitle}</p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link
-                to={copy.primary.to}
-                className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
-              >
+              <Link to={copy.primary.to} className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">
                 <PrimaryIcon className="h-5 w-5" />
                 {copy.primary.label}
               </Link>
-              <Link
-                to={copy.secondary.to}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-              >
+              <Link to={copy.secondary.to} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
                 <SecondaryIcon className="h-5 w-5" />
                 {copy.secondary.label}
               </Link>
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-4">
-              <div className="text-xs uppercase tracking-[0.3em] text-emerald-700">Live priority</div>
-              <div className="mt-2 text-2xl font-semibold text-emerald-950">{summary.total_active_incidents} open</div>
-            </div>
-            <div className="rounded-3xl border border-sky-100 bg-sky-50 p-4">
-              <div className="text-xs uppercase tracking-[0.3em] text-sky-700">Current weather</div>
-              <div className="mt-2 text-2xl font-semibold text-sky-950">{weatherQuery.data?.summary ?? 'Updating'}</div>
-            </div>
-            <div className="rounded-3xl border border-amber-100 bg-amber-50 p-4">
-              <div className="text-xs uppercase tracking-[0.3em] text-amber-700">Help line</div>
-              <div className="mt-2 text-2xl font-semibold text-amber-950">Emergency first</div>
-            </div>
+            <MiniTag label="Open" value={summary.total_active_incidents} />
+            <MiniTag label="Weather" value={summary.weather_alerts} tone="sky" />
+            <MiniTag label="Assets" value={summary.community_resources_available} tone="amber" />
           </div>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {topStats.map((stat) => (
-          <StatCard key={stat.title} title={stat.title} value={stat.value} detail={stat.detail} accent={stat.accent} />
+        {metrics.map((item) => (
+          <StatCard key={item.label} title={item.label} value={item.value} accent={item.tone} />
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {supportStats.map((stat) => (
-          <StatCard key={stat.title} title={stat.title} value={stat.value} detail={stat.detail} accent={stat.accent} />
-        ))}
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
-        <div className="space-y-6">
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
+        <div className="space-y-4">
           <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-            <SectionHeader
-              eyebrow="Live map"
-              title="Incident and resource movement"
-              description="This view keeps the live situation readable: incidents, moving resources, routes, and community shelters."
-            />
+            <SectionHeader eyebrow="Live map" title="Incidents, routes, and resources" />
             <div className="mt-4">
               <MapPanel incidents={summary.live_incidents} resources={resources} />
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <InfoPanel
-              eyebrow="AI recommendations"
-              title="Why these actions are suggested"
-              description="Each recommendation is explained in plain language so leaders and volunteers can act quickly."
-              items={summary.ai_recommendations}
-              accent="emerald"
-            />
-            <InfoPanel
-              eyebrow="Recent alerts"
-              title="Live feed"
-              description="Public-facing alerts and internal notices are grouped together for quick review."
-              items={summary.recent_alerts.map((alert) => `${alert.title} · ${alert.body}`)}
-              accent="sky"
-            />
+          <div className="grid gap-4 xl:grid-cols-2">
+            <CompactPanel title="AI recommendations" items={summary.ai_recommendations} />
+            <CompactPanel title="Recent alerts" items={summary.recent_alerts.slice(0, 5).map((item) => item.title)} />
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-            <SectionHeader eyebrow="Operational journal" title="Recent activity" description="The live event feed shows the most recent simulation and system updates." />
-            <div className="mt-4">
-              <LiveEventList events={events} />
+            <SectionHeader eyebrow="Charts" title="Trend view" />
+            <div className="mt-4 space-y-4">
+              {chartData.map((chart) => (
+                <BarChart key={chart.title} title={chart.title} points={chart.points} barColor={chart.barColor} />
+              ))}
             </div>
           </div>
 
           <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-            <SectionHeader eyebrow="Community AI" title="Current situation" description="A short summary of the current operating picture." />
+            <SectionHeader eyebrow="Status" title="Current picture" />
             <div className="mt-4 space-y-3">
-              <MiniSummary label="Current picture" value={`Tracking ${summary.total_active_incidents} active reports`} tone="emerald" />
-              <MiniSummary label="High risk" value={`${summary.high_risk_villages} villages need attention`} tone="amber" />
-              <MiniSummary label="Resource posture" value={`${summary.community_resources_available} community resources available`} tone="sky" />
+              <MiniSummary label="Risk villages" value={`${summary.high_risk_villages}`} />
+              <MiniSummary label="Families displaced" value={`${summary.families_displaced}`} />
+              <MiniSummary label="Roads closed" value={`${summary.roads_closed}`} />
             </div>
           </div>
 
           <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-            <SectionHeader eyebrow="Quick actions" title="Role shortcuts" description="Only the actions useful to your role should stay visible." />
+            <SectionHeader eyebrow="Shortcuts" title="Role actions" />
             <div className="mt-4 flex flex-wrap gap-3">
-              {mode === 'public' ? (
-                <>
-                  <Shortcut label="Report emergency" to="/report" />
-                  <Shortcut label="Open map" to="/map" />
-                  <Shortcut label="Shelters" to="/resources" />
-                </>
-              ) : mode === 'responder' ? (
-                <>
-                  <Shortcut label="Assignments" to="/assignments" />
-                  <Shortcut label="Incidents" to="/incidents" />
-                  <Shortcut label="Settings" to="/settings" />
-                </>
-              ) : mode === 'leader' ? (
-                <>
-                  <Shortcut label="Missions" to="/commander" />
-                  <Shortcut label="Briefs" to="/reports" />
-                  <Shortcut label="Incidents" to="/incidents" />
-                </>
-              ) : (
-                <>
-                  <Shortcut label="County console" to="/admin" />
-                  <Shortcut label="Analytics" to="/analytics" />
-                  <Shortcut label="Search" to="/search" />
-                </>
-              )}
+              {shortcuts.map((item) => (
+                <Link key={item.to} to={item.to} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+                  {item.label}
+                  <ArrowRightIcon className="h-4 w-4" />
+                </Link>
+              ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+        <SectionHeader eyebrow="Journal" title="Recent activity" />
+        <div className="mt-4">
+          <LiveEventList events={events} />
         </div>
       </div>
     </div>
   )
 }
 
-function InfoPanel({
-  eyebrow,
-  title,
-  description,
-  items,
-  accent,
-}: {
-  eyebrow: string
-  title: string
-  description: string
-  items: string[]
-  accent: 'emerald' | 'sky'
-}) {
-  const tone =
-    accent === 'emerald'
-      ? 'border-emerald-100 bg-emerald-50 text-emerald-700'
-      : 'border-sky-100 bg-sky-50 text-sky-700'
-  return (
-    <div className={`rounded-[2rem] border p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] ${tone}`}>
-      <SectionHeader eyebrow={eyebrow} title={title} description={description} />
-      <div className="mt-4 space-y-3">
-        {items.map((item) => (
-          <motion.div key={item} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-white/60 bg-white/85 p-4 text-sm text-slate-700 shadow-sm">
-            {item}
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function MiniSummary({
-  label,
-  value,
-  tone,
-}: {
-  label: string
-  value: string
-  tone: 'emerald' | 'amber' | 'sky'
-}) {
-  const style =
+function MiniTag({ label, value, tone = 'emerald' }: { label: string; value: number; tone?: 'emerald' | 'sky' | 'amber' }) {
+  const styles =
     tone === 'emerald'
       ? 'border-emerald-100 bg-emerald-50 text-emerald-800'
-      : tone === 'amber'
-        ? 'border-amber-100 bg-amber-50 text-amber-800'
-        : 'border-sky-100 bg-sky-50 text-sky-800'
+      : tone === 'sky'
+        ? 'border-sky-100 bg-sky-50 text-sky-800'
+        : 'border-amber-100 bg-amber-50 text-amber-800'
   return (
-    <div className={`rounded-3xl border p-4 ${style}`}>
-      <div className="text-xs uppercase tracking-[0.25em] opacity-70">{label}</div>
-      <div className="mt-2 text-sm font-semibold">{value}</div>
+    <div className={`rounded-3xl border p-4 ${styles}`}>
+      <div className="text-xs uppercase tracking-[0.3em] opacity-70">{label}</div>
+      <div className="mt-2 text-2xl font-semibold">{value}</div>
     </div>
   )
 }
 
-function Shortcut({ label, to }: { label: string; to: string }) {
+function MiniSummary({ label, value }: { label: string; value: string }) {
   return (
-    <Link to={to} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
-      {label}
-      <ArrowRightIcon className="h-4 w-4" />
-    </Link>
+    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      <div className="text-xs uppercase tracking-[0.3em] text-slate-500">{label}</div>
+      <div className="mt-2 text-sm font-semibold text-slate-950">{value}</div>
+    </div>
+  )
+}
+
+function CompactPanel({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+      <div className="text-sm font-semibold text-slate-950">{title}</div>
+      <div className="mt-4 space-y-2">
+        {items.length > 0 ? (
+          items.slice(0, 4).map((item) => (
+            <motion.div
+              key={item}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+            >
+              {item}
+            </motion.div>
+          ))
+        ) : (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">No items.</div>
+        )}
+      </div>
+    </div>
   )
 }

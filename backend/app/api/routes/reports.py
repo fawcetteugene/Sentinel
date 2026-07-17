@@ -5,7 +5,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
-from app.api.deps import db_session, get_current_user, require_role
+from app.api.deps import db_session, require_role
 from app.core.security import Role
 from app.models import User
 from app.schemas import ReportCreate, ReportRead
@@ -15,7 +15,10 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 @router.get("", response_model=list[ReportRead])
-def list_reports(_: User = Depends(get_current_user), db: Session = Depends(db_session)) -> list[ReportRead]:
+def list_reports(
+    _: User = Depends(require_role(Role.COMMUNITY_LEADER, Role.COUNTY_ADMIN, Role.INCIDENT_COMMANDER, Role.DISPATCHER, Role.ADMINISTRATOR)),
+    db: Session = Depends(db_session),
+) -> list[ReportRead]:
     return [ReportRead.model_validate(item) for item in OperationsService(db).list_reports()]
 
 
@@ -32,7 +35,7 @@ def create_report(
 def export_reports(
     format: Literal["csv", "pdf"] = Query(default="csv"),
     kind: str | None = Query(default=None),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_role(Role.COMMUNITY_LEADER, Role.COUNTY_ADMIN, Role.INCIDENT_COMMANDER, Role.DISPATCHER, Role.ADMINISTRATOR)),
     db: Session = Depends(db_session),
 ) -> Response:
     service = OperationsService(db)
